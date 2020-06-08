@@ -183,7 +183,7 @@ case class Elaboration() {
       instanceName -> subUntimed
     }
 
-    val methods = untimed.methods.map { meth =>
+    val methods = untimed.getMethods.map { meth =>
       val (raw_firrtl, raw_annos) = elaborate(untimed, meth.generate)
 
       // build module for this method:
