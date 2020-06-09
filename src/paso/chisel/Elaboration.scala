@@ -10,8 +10,9 @@ import firrtl.annotations.Annotation
 import firrtl.ir.{BundleType, NoInfo}
 import firrtl.{ChirrtlForm, CircuitState, Compiler, CompilerUtils, HighFirrtlEmitter, HighForm, IRToWorkingIR, LowFirrtlCompiler, ResolveAndCheck, Transform, ir}
 import paso.chisel.passes.{ChangeAnnotationCircuit, ExposeSubModules, FindModuleState, FindState, FixClockRef, FixReset, RemoveInstances, ReplaceMemReadWithVectorAccess, State}
+import paso.untimed.SubmoduleAnnotation
 import paso.verification.{Assertion, MethodSemantics, ProtocolInterpreter, Spec, StepNode, Subspec, UntimedModel, VerificationProblem}
-import paso.{IsSubmodule, ProofCollateral, Protocol, ProtocolSpec, SubSpecs, SubmoduleAnnotation, UntimedModule}
+import paso.{IsSubmodule, ProofCollateral, Protocol, ProtocolSpec, SubSpecs}
 import uclid.smt
 
 /** essentially a HighFirrtlCompiler + ToWorkingIR */
@@ -192,7 +193,7 @@ case class Elaboration() {
     val interpreter =  new FirrtlUntimedMethodInterpreter(ff, annos)
     interpreter.run()
 
-    val methods = untimed.getMethods.map { meth =>
+    val methods = untimed.methods.map { meth =>
       val sem = interpreter.getSemantics(meth.name)
       println(sem)
       meth.name -> sem
@@ -233,7 +234,7 @@ case class Elaboration() {
     val (c, anno) = toFirrtl({ () =>
       ip = Some(gen())
       // generate the circuit for each method
-      ip.get.spec.getMethods.foreach { _.generate() }
+      ip.get.spec.methods.foreach { _.generate() }
       ip.get.spec
     })
     ChiselSpec(ip.get.spec, ip.get.protos, c, anno)
