@@ -24,7 +24,7 @@ object ChiselCompiler {
     val genAnno = ChiselGeneratorAnnotation(gen)
     val lowFirrtlAnno = CompilerAnnotation(new LowFirrtlCompiler)
     val baseAnnos = Seq(genAnno, lowFirrtlAnno)
-    val r = stage.run(baseAnnos)
+    val r = stage.transform(baseAnnos)
 
     // retrieve circuit
     val circuit = r.collectFirst { case FirrtlCircuitAnnotation(a) => a }.get
