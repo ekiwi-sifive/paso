@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 class UntimedModule extends MultiIOModule with MethodParent {
   override private[paso] def addMethod(m: Method): Unit = _methods.append(m)
-  override def getName: String = this.pathName
+  def getName: String = this.pathName
   override def isElaborated: Boolean =_isElaborated
   private var _isElaborated = false
   private var _firrtl: Option[firrtl.CircuitState] = None
@@ -40,6 +40,8 @@ object UntimedModule {
     // when elaborating, this acts like chisel3.Module(...)
     if(elaborating.get()) {
       val sub = Module(m)
+      // immediatly generate all methods for the submodule
+      sub.methods.foreach(_.generate())
       annotate(new ChiselAnnotation { override def toFirrtl = SubmoduleAnnotation(sub.toTarget, sub) })
       sub
     } else { // but it can also be used to elaborate the toplevel

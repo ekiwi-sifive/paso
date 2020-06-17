@@ -13,7 +13,6 @@ import scala.collection.mutable
 
 private[paso] trait MethodParent {
   private[paso] def addMethod(m: Method): Unit
-  private[paso] def getName: String
   private[paso] def isElaborated: Boolean
 }
 
@@ -59,7 +58,9 @@ case class IMethod[I <: Data](name: String, guard: () => Bool, inputType: I, imp
 case class OMethod[O <: Data](name: String, guard: () => Bool, outputType: O, impl: O => Unit, parent: MethodParent) extends Method {
   def apply(): O = {
     require(!parent.isElaborated, "TODO: implement method calls for elaborated UntimedMoudles")
-    val fullName = parent.getName + "." + name
+    // TODO: do not rely on parent name
+    println("WARN: method parent should be tracked via an annotation")
+    val fullName = name
     val ii = MethodCall.getCallCount(fullName)
     // create port to emulate the function call
     val call = IO(new OMethodCallBundle(outputType)).suggestName(fullName + "_" + ii)
@@ -76,7 +77,9 @@ case class OMethod[O <: Data](name: String, guard: () => Bool, outputType: O, im
 case class IOMethod[I <: Data, O <: Data](name: String, guard: () => Bool, inputType: I, outputType: O, impl: (I,O) => Unit, parent: MethodParent) extends Method {
   def apply(in: I): O = {
     require(!parent.isElaborated, "TODO: implement method calls for elaborated UntimedMoudles")
-    val fullName = parent.getName + "." + name
+    // TODO: do not rely on parent name
+    println("WARN: method parent should be tracked via an annotation")
+    val fullName = name
     val ii = MethodCall.getCallCount(fullName)
     // create port to emulate the function call
     val call = IO(new IOMethodCallBundle(inputType, outputType)).suggestName(fullName + "_" + ii)
