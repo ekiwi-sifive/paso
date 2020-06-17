@@ -67,15 +67,17 @@ object NamespaceIdentifiers {
     val (renamedUntimed, stateSubs) = renameUntimedModel(fullPrefix, spec.untimed)
 
     // io substitutions for protocols
-    val args = spec.untimed.methods.flatMap{case (name, sem) =>
-      sem.inputs.map{ i => i.copy(id = name + "." + i.id) } ++
-        sem.outputs.flatMap{ case NamedGuardedExpr(sym, _,_) => Seq(sym.copy(id = name + "." + sym.id) ,
-          smt.Symbol(name + "." + sym.id + ".valid", smt.BoolType))}
+    val specIoSubs : Map[String, SymSub] = spec.untimed.methods.map{ case (name, sem) =>
+      val io = sem.inputs ++ sem.outputs.flatMap(o => Seq(o.sym, o.guardSym))
+      val sub : SymSub = io.map(s => s -> s.copy(id = fullPrefix + name + "." + s.id)).toMap
+      name -> sub
     }
-    val specIoSubs : SymSub = args.prefix(fullPrefix).toMap
     val methodNameSubs = spec.untimed.methods.map{case (name, _) => name -> name} // TODO: should this be prefixed or not?
-    val protocolIoSubs = specIoSubs ++ implIoSubs
-    val renamedProtocols = spec.protocols.map{ case(name, graph) => (name, renameProtocol(graph, protocolIoSubs, methodNameSubs)) }
+    val renamedProtocols = spec.protocols.map { case(name, graph) =>
+      // the protocol refers to method arguments in the spec as well as I/O wires of the implementation
+      val protocolIoSubs = specIoSubs(name) ++ implIoSubs
+      name -> renameProtocol(graph, protocolIoSubs, methodNameSubs)
+    }
 
     (Spec(renamedUntimed, renamedProtocols), stateSubs)
   }

@@ -163,9 +163,10 @@ case class Elaboration() {
 
   private case class Untimed[S <: UntimedModule](state: Seq[State], model: UntimedModel, protocols: Seq[Protocol])
   private def elaborateUntimed[S <: UntimedModule](spec: ChiselSpec[S]): Untimed[S] = {
-    val spec_name = spec.circuit.main
-    val modules = spec.circuit.modules.map(_.asInstanceOf[ir.Module])
-    val (spec_state, untimed_model) = elaborateUntimed(spec_name, spec.untimed, modules, spec.annos)
+    val fir = spec.untimed.getFirrtl
+    val spec_name = fir.circuit.main
+    val modules = fir.circuit.modules.map(_.asInstanceOf[ir.Module])
+    val (spec_state, untimed_model) = elaborateUntimed(spec_name, spec.untimed, modules, fir.annotations)
     Untimed(spec_state, untimed_model, spec.protos)
   }
 
@@ -183,18 +184,13 @@ case class Elaboration() {
       instanceName -> subUntimed
     }
 
-    // compile to untimed module to low firrtl
-    val circuit = ir.Circuit(NoInfo, main=spec_name, modules = Seq(main))
-    val (ff, lo_annos) = toLowFirrtl(circuit, annos)
-    println(ff.serialize)
-
     // get formal representation for each method
-    val interpreter =  new FirrtlUntimedMethodInterpreter(ff, annos)
+    val fir = ir.Circuit(NoInfo, Seq(spec_module), spec_name)
+    val interpreter =  new FirrtlUntimedMethodInterpreter(fir, annos)
     interpreter.run()
 
     val methods = untimed.methods.map { meth =>
       val sem = interpreter.getSemantics(meth.name)
-      println(sem)
       meth.name -> sem
     }.toMap
 
@@ -227,16 +223,11 @@ case class Elaboration() {
     val (c, anno) = toFirrtl({() => ip = Some(gen()); ip.get})
     ChiselImpl(ip.get, c, anno)
   }
-  case class ChiselSpec[S <: UntimedModule](untimed: S, protos: Seq[Protocol], circuit: ir.Circuit, annos: Seq[Annotation])
+  case class ChiselSpec[S <: UntimedModule](untimed: S, protos: Seq[Protocol])
   private def chiselElaborationSpec[S <: UntimedModule](gen: () => ProtocolSpec[S]): ChiselSpec[S] = {
-    var ip: Option[ProtocolSpec[S]] = None
-    val (c, anno) = toFirrtl({ () =>
-      ip = Some(gen())
-      // generate the circuit for each method
-      ip.get.spec.methods.foreach { _.generate() }
-      ip.get.spec
-    })
-    ChiselSpec(ip.get.spec, ip.get.protos, c, anno)
+    val spec = gen()
+    assert(spec.spec.isElaborated, "Did you forget to wrap your untimed module in UntimedModule(...)?")
+    ChiselSpec(spec.spec, spec.protos)
   }
 
   def apply[I <: RawModule, S <: UntimedModule](impl: () => I, proto: (I) => ProtocolSpec[S], findSubspecs: (I,S) => SubSpecs[I,S], inv: (I, S) => ProofCollateral[I, S]): VerificationProblem = {

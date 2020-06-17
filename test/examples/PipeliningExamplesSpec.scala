@@ -22,7 +22,7 @@ class Register(withBug: Boolean = false) extends Module {
 }
 
 class RegisterProtocol(impl: Register) extends ProtocolSpec[IdentityNoIdle[UInt]] {
-  val spec = new IdentityNoIdle[UInt](chiselTypeOf(impl.io.in))
+  val spec = UntimedModule(new IdentityNoIdle[UInt](chiselTypeOf(impl.io.in)))
 
   protocol(spec.id)(impl.io) { (clock, dut, in, out) =>
     dut.in.set(in)
@@ -50,7 +50,7 @@ class PipelinedMul(withBug: Boolean = false) extends Module {
 }
 
 class PipelinedMulProtocol(impl: PipelinedMul) extends ProtocolSpec[Mul32Spec] {
-  val spec = new Mul32Spec
+  val spec = UntimedModule(new Mul32Spec)
 
   protocol(spec.mul)(impl.io) { (clock, dut, in, out) =>
     dut.a.set(in.a)
@@ -103,7 +103,7 @@ trait MacProto extends ProtocolSpec[UntimedModule] {
 
 
 class PipelinedMacProtocol(impl: PipelinedMac) extends ProtocolSpec[Mac32Spec] with MacProto {
-  val spec = new Mac32Spec
+  val spec = UntimedModule(new Mac32Spec)
   protocol(spec.mac)(impl.io) { proto }
 }
 
@@ -117,7 +117,7 @@ class Mac32SpecWithSubSpec extends UntimedModule {
 }
 
 class PipelinedMacProtocolWithSubSpec(impl: PipelinedMac) extends ProtocolSpec[Mac32SpecWithSubSpec] with MacProto {
-  val spec = new Mac32SpecWithSubSpec
+  val spec = UntimedModule(new Mac32SpecWithSubSpec)
   protocol(spec.mac)(impl.io) { proto }
 }
 
@@ -141,7 +141,7 @@ class PipelinedAdd2(withBug: Boolean = false) extends Module {
 }
 
 class PipelinedAdd2Protocol(impl: PipelinedAdd2) extends ProtocolSpec[Add2Spec] {
-  val spec = new Add2Spec
+  val spec = UntimedModule(new Add2Spec)
 
   protocol(spec.add)(impl.io) { (clock, dut, in, out) =>
     dut.a.set(in.a)
@@ -188,7 +188,7 @@ class Add3CompositionalSpec extends UntimedModule {
 }
 
 class PipelinedAdd3Protocol(impl: PipelinedAdd3) extends ProtocolSpec[Add3Spec] {
-  val spec = new Add3Spec
+  val spec = UntimedModule(new Add3Spec)
 
   protocol(spec.add3)(impl.io) { (clock, dut, in, out) =>
     dut.a.set(in.a)
@@ -204,7 +204,7 @@ class PipelinedAdd3Protocol(impl: PipelinedAdd3) extends ProtocolSpec[Add3Spec] 
 }
 
 class PipelinedAdd3CompositionalProtocol(impl: PipelinedAdd3) extends ProtocolSpec[Add3CompositionalSpec] {
-  val spec = new Add3CompositionalSpec
+  val spec = UntimedModule(new Add3CompositionalSpec)
 
   protocol(spec.add3)(impl.io) { (clock, dut, in, out) =>
     dut.a.set(in.a)
@@ -233,7 +233,7 @@ class PipelinedAdd3Delay2(withBug: Boolean = false) extends Module {
 }
 
 class PipelinedAdd3Delay2Protocol(impl: PipelinedAdd3Delay2) extends ProtocolSpec[Add3Spec] {
-  val spec = new Add3Spec
+  val spec = UntimedModule(new Add3Spec)
 
   protocol(spec.add3)(impl.io) { (clock, dut, in, out) =>
     dut.first.set(true.B)
@@ -251,7 +251,7 @@ class PipelinedAdd3Delay2Protocol(impl: PipelinedAdd3Delay2) extends ProtocolSpe
 }
 
 class PipelinedAdd3Delay2ProtocolCompisitional(impl: PipelinedAdd3Delay2) extends ProtocolSpec[Add3CompositionalSpec] {
-  val spec = new Add3CompositionalSpec
+  val spec = UntimedModule(new Add3CompositionalSpec)
 
   protocol(spec.add3)(impl.io) { (clock, dut, in, out) =>
     dut.first.set(true.B)
