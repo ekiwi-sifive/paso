@@ -8,6 +8,8 @@ import chisel3._
 import org.scalatest._
 import paso.UntimedModule
 
+import scala.reflect.io.File
+
 
 class UntimedInc extends UntimedModule {
   val inc = fun("inc").in(UInt(32.W)).out(UInt(32.W)) {
@@ -38,7 +40,6 @@ class UntimedModuleSpec extends FlatSpec {
     // as a crude check to see if the circuit is actually in LowForm, make sure there are no whens
     val src = f.circuit.serialize
     assert(!src.contains("when "))
-
   }
 
   "an UntimedModule with state" should "be elaborated with UntimedModule(new ...)" in {
@@ -49,5 +50,15 @@ class UntimedModuleSpec extends FlatSpec {
     assert(m.value.getWidth == 4)
     val inc = m.methods.head
     assert(inc.name == "inc")
+  }
+
+  "elaborating an UntimeModule" should "not create any files on disk" ignore {
+    val filename = "Counter4Bit.lo.fir"
+    // remove file
+    File(filename).delete()
+    // elaborate
+    val m = UntimedModule(new Counter4Bit)
+    // ensure that the file wasn't recreated
+    assert(!File(filename).exists, "The compiler should not dump the results to a firrtl file!")
   }
 }
