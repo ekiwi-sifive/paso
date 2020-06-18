@@ -13,6 +13,7 @@ import scala.collection.mutable
 
 private[paso] trait MethodParent {
   private[paso] def addMethod(m: Method): Unit
+  private[paso] def markDontCare(d: Data): Unit
   private[paso] def isElaborated: Boolean
 }
 
@@ -85,6 +86,7 @@ case class IOMethod[I <: Data, O <: Data](name: String, guard: () => Bool, input
     val call = IO(new IOMethodCallBundle(inputType, outputType)).suggestName(fullName + "_" + ii)
     annotate(new ChiselAnnotation { override def toFirrtl: Annotation = MethodCallAnnotation(call.arg.toTarget, fullName, ii, true) })
     annotate(new ChiselAnnotation { override def toFirrtl: Annotation = MethodCallAnnotation(call.ret.toTarget, fullName, ii, false) })
+    parent.markDontCare(call.arg)
     call.arg := in
     call.ret
   }

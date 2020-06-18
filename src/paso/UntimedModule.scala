@@ -15,6 +15,8 @@ import scala.collection.mutable
 
 class UntimedModule extends MultiIOModule with MethodParent {
   override private[paso] def addMethod(m: Method): Unit = _methods.append(m)
+  override private[paso] def markDontCare(d: Data): Unit = _dontCareSignals.append(d)
+  private val _dontCareSignals = mutable.ArrayBuffer[Data]()
   def getName: String = this.pathName
   override def isElaborated: Boolean =_isElaborated
   private var _isElaborated = false
@@ -39,9 +41,14 @@ object UntimedModule {
   def apply[M <: UntimedModule](m: => M): M = {
     // when elaborating, this acts like chisel3.Module(...)
     if(elaborating.get()) {
-      val sub = Module(m)
-      // immediatly generate all methods for the submodule
-      sub.methods.foreach(_.generate())
+      val sub = Module {
+        val mod = m
+        // make sure all signals are marked as DontCare before the methods are generated
+        mod._dontCareSignals.foreach(s => s := DontCare)
+        // immediatly generate all methods for the submodule
+        mod.methods.foreach(_.generate())
+        mod
+      }
       annotate(new ChiselAnnotation { override def toFirrtl = SubmoduleAnnotation(sub.toTarget, sub) })
       sub
     } else { // but it can also be used to elaborate the toplevel
@@ -53,6 +60,8 @@ object UntimedModule {
     var opt: Option[M] = None
     val gen = () => {
       opt = Some(m)
+      // make sure all signals are marked as DontCare before the methods are generated
+      opt.get._dontCareSignals.foreach(s => s := DontCare)
       // generate the circuit for each method
       opt.get.methods.foreach(_.generate())
       opt.get
