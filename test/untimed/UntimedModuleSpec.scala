@@ -25,6 +25,15 @@ class Counter4Bit extends UntimedModule {
   }
 }
 
+class Counter4BitWithSubModule extends UntimedModule {
+  val value = RegInit(0.U(4.W))
+  val ii = UntimedModule(new UntimedInc)
+  val inc = fun("inc").out(UInt(4.W)) { out =>
+    value := ii.inc(value)
+    out := ii.inc(value)
+  }
+}
+
 class UntimedModuleSpec extends FlatSpec {
   "a simple UntimedModule" should "be elaborated with UntimedModule(new ...)" in {
     val m = UntimedModule(new UntimedInc)
@@ -60,5 +69,15 @@ class UntimedModuleSpec extends FlatSpec {
     val m = UntimedModule(new Counter4Bit)
     // ensure that the file wasn't recreated
     assert(!File(filename).exists, "The compiler should not dump the results to a firrtl file!")
+  }
+
+  "an UntimedModule with a sub module" should "be elaborated with UntimedModule(new ...)" in {
+    val m = UntimedModule(new Counter4BitWithSubModule)
+    assert(m.isElaborated)
+    assert(m.getName == "Counter4BitWithSubModule")
+    assert(m.methods.size == 1)
+    assert(m.value.getWidth == 4)
+    val inc = m.methods.head
+    assert(inc.name == "inc")
   }
 }
