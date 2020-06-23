@@ -6,12 +6,13 @@ package paso
 import chisel3._
 import chisel3.experimental.{ChiselAnnotation, IO, annotate}
 import firrtl.annotations.{ReferenceTarget, SingleTargetAnnotation}
+import paso.assertions.PasoAssertion
 import paso.untimed.{IMethod, IOMethod, NMethod, OMethod}
 
 import scala.collection.mutable
 
 /** Specifies a Chisel Module `IM` by binding it to an untimed model `SM` through protocols. */
-abstract class ProtocolSpec[+S <: UntimedModule] {
+abstract class ProtocolSpec[+S <: UntimedModule] extends PasoAssertion {
   val spec: S
   val stickyInputs: Boolean = true
   val protos = new mutable.ArrayBuffer[Protocol]()
@@ -69,13 +70,6 @@ abstract class ProtocolSpec[+S <: UntimedModule] {
     }
   } else {
     assert(!cond)
-  }
-
-  // replace default chisel assert
-  private def assert(cond: => Bool): Unit = {
-    val w = Wire(Bool()).suggestName("assert")
-    w := cond
-    annotate(new ChiselAnnotation { override def toFirrtl = AssertAnnotation(w.toTarget) })
   }
 }
 

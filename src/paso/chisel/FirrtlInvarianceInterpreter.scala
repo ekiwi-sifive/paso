@@ -8,7 +8,7 @@ import chisel3.util.log2Ceil
 import firrtl.annotations.Annotation
 import firrtl.ir
 import firrtl.ir.Type
-import paso.{ForallEndAnnotation, ForallStartAnnotation, MemEqualAnnotation, MemToVecAnnotation}
+import paso.assertions.{ForallEndAnnotation, ForallStartAnnotation, MemEqualAnnotation, MemToVecAnnotation}
 import paso.verification.{Assertion, BasicAssertion, ForAllAssertion, substituteSmt}
 import uclid.smt
 

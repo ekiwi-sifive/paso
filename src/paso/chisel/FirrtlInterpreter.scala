@@ -7,7 +7,7 @@ package paso.chisel
 import chisel3.util.log2Ceil
 import firrtl.annotations.Annotation
 import firrtl.ir
-import paso.AssertAnnotation
+import paso.assertions.AssertAnnotation
 import uclid.smt
 
 
