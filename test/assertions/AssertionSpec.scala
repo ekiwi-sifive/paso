@@ -31,6 +31,17 @@ class AssertionSpec extends FlatSpec {
 
 
   }
+
+  "Guarded assertion" should "compile" in {
+    def invariances(c: Counter): Unit = {
+      when(c.io.enabled) {
+        // TODO: replace with paso.assert
+        chisel3.assert(c.c <= 15.U)
+      }
+    }
+
+
+  }
 }
 
 
