@@ -6,9 +6,8 @@ package assertions
 
 
 import org.scalatest._
-
 import chisel3._
-import paso._
+import paso.assertions._
 
 
 /**
@@ -22,25 +21,19 @@ import paso._
  *
  * The following unit tests try to ensure that all of this is working as intended.
  */
-class AssertionSpec extends FlatSpec {
+class AssertionSpec extends FlatSpec with PasoAssertion {
   "Simple assertion" should "compile" in {
     def invariances(c: Counter): Unit = {
-      // TODO: replace with paso.assert
-      chisel3.assert(c.c <= 15.U)
+      assert(c.c <= 15.U)
     }
-
-
   }
 
   "Guarded assertion" should "compile" in {
     def invariances(c: Counter): Unit = {
       when(c.io.enabled) {
-        // TODO: replace with paso.assert
-        chisel3.assert(c.c <= 15.U)
+        assert(c.c <= 15.U)
       }
     }
-
-
   }
 }
 
