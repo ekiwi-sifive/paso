@@ -5,6 +5,12 @@
 package assertions
 
 
+import org.scalatest._
+
+import chisel3._
+import paso._
+
+
 /**
  * Paso allows Invariances to be specified outside of the RTL implementation in the form of Assertions.
  * We can refer to the signals of the RTL implementation by using the AOP approach which allows us to
@@ -16,6 +22,25 @@ package assertions
  *
  * The following unit tests try to ensure that all of this is working as intended.
  */
-class AssertionSpec {
+class AssertionSpec extends FlatSpec {
+  "Simple assertion" should "compile" in {
+    def invariances(c: Counter): Unit = {
+      // TODO: replace with paso.assert
+      chisel3.assert(c.c <= 15.U)
+    }
 
+
+  }
+}
+
+
+class Counter extends Module {
+  val io = IO(new Bundle {
+    val enabled = Input(Bool())
+    val value = Output(UInt(4.W))
+  })
+
+  val c = RegInit(0.U(4.W))
+  when(io.enabled) { c := c + 1.U }
+  io.value := c
 }
