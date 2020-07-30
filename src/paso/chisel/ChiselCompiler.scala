@@ -6,34 +6,30 @@ package paso.chisel
 
 import chisel3.RawModule
 import chisel3.stage._
-import firrtl.annotations.DeletedAnnotation
-import firrtl.options.Dependency
-import firrtl.{EmitCircuitAnnotation, LowFirrtlCompiler, LowFirrtlEmitter, UnknownForm, ir}
-import firrtl.stage.{CompilerAnnotation, FirrtlCircuitAnnotation, RunFirrtlTransformAnnotation}
+import chisel3.stage.phases.Convert
+import firrtl.stage.{FirrtlCircuitAnnotation, Forms, TransformManager}
 
 object ChiselCompiler {
-  private val stage = new chisel3.stage.ChiselStage {
-    override val targets = Seq(
-      Dependency[chisel3.stage.phases.Checks],
-      Dependency[chisel3.stage.phases.Elaborate],
-      Dependency[chisel3.stage.phases.MaybeAspectPhase],
-      Dependency[chisel3.stage.phases.Convert],
-      Dependency[chisel3.stage.phases.MaybeFirrtlStage])
-  }
-  def toLowFirrtl[M <: RawModule](gen: () => M): firrtl.CircuitState = {
+  private val converter = new Convert
+  def elaborate[M <: RawModule](gen: () => M): (firrtl.CircuitState, M) = {
+    // run Builder.build(Module(gen()))
     val genAnno = ChiselGeneratorAnnotation(gen)
-    val lowFirrtlAnno = CompilerAnnotation(new LowFirrtlCompiler)
-    val baseAnnos = Seq(genAnno, lowFirrtlAnno)
-    val r = stage.transform(baseAnnos)
+    val elaborationAnnos = genAnno.elaborate
 
-    // retrieve circuit
-    val circuit = r.collectFirst { case FirrtlCircuitAnnotation(a) => a }.get
-    // filter out circuit and deleted annotations
-    val finalAnnos = r.filter {
-      case FirrtlCircuitAnnotation(_) | DeletedAnnotation(_, _) => false
-      case _ => true
-    }
-    // build state
-    firrtl.CircuitState(circuit, UnknownForm, finalAnnos)
+    // extract elaborated module
+    val dut = elaborationAnnos.collectFirst{ case DesignAnnotation(d) => d}.get
+
+    // run Converter.convert(a.circuit) and toFirrtl on all annotations
+    val converterAnnos = converter.transform(elaborationAnnos)
+    val chirrtl = converterAnnos.collectFirst { case FirrtlCircuitAnnotation(c) => c }.get
+    val annos = converterAnnos.filterNot(_.isInstanceOf[FirrtlCircuitAnnotation])
+    val state = firrtl.CircuitState(chirrtl, firrtl.ChirrtlForm, annos)
+
+    (state, dut.asInstanceOf[M])
   }
+}
+
+object FirrtlCompiler {
+  private def lowFirrtlCompiler = new TransformManager(Forms.LowForm)
+  def toLowFirrtl(state: firrtl.CircuitState): firrtl.CircuitState = lowFirrtlCompiler.runTransform(state)
 }

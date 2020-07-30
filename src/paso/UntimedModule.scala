@@ -8,7 +8,7 @@ package paso
 import chisel3._
 import chisel3.experimental.{ChiselAnnotation, annotate}
 import firrtl.annotations.{ModuleTarget, SingleTargetAnnotation}
-import paso.chisel.ChiselCompiler
+import paso.chisel.{ChiselCompiler, FirrtlCompiler}
 import paso.untimed._
 
 import scala.collection.mutable
@@ -57,17 +57,16 @@ object UntimedModule {
   }
   def elaborate[M <: UntimedModule](m: => M): M = {
     elaborating.set(true)
-    var opt: Option[M] = None
     val gen = () => {
-      opt = Some(m)
+      val x = m
       // make sure all signals are marked as DontCare before the methods are generated
-      opt.get._dontCareSignals.foreach(s => s := DontCare)
+      x._dontCareSignals.foreach(s => s := DontCare)
       // generate the circuit for each method
-      opt.get.methods.foreach(_.generate())
-      opt.get
+      x.methods.foreach(_.generate())
+      x
     }
-    val fir = ChiselCompiler.toLowFirrtl(gen)
-    val mod = opt.get
+    val (chirrtl, mod) = ChiselCompiler.elaborate(gen)
+    val fir = FirrtlCompiler.toLowFirrtl(chirrtl)
     mod._isElaborated = true
     mod._firrtl = Some(fir)
     elaborating.set(false)

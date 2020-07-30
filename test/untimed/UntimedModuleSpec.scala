@@ -61,7 +61,7 @@ class UntimedModuleSpec extends FlatSpec {
     assert(inc.name == "inc")
   }
 
-  "elaborating an UntimeModule" should "not create any files on disk" ignore {
+  "elaborating an UntimeModule" should "not create any files on disk" in {
     val filename = "Counter4Bit.lo.fir"
     // remove file
     File(filename).delete()
